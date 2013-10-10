@@ -13,7 +13,6 @@ namespace Articulate
 {
     static class CommandPool
     {
-        private static Subject subjectObject;
         private static Dictionary<string, Command> commandObjects;
 
         public static SrgsDocument BuildSrgsGrammar(CultureInfo cultureInfo)
@@ -21,6 +20,7 @@ namespace Articulate
             SrgsDocument document = new SrgsDocument();
             document.Culture = cultureInfo;
 
+            /*
             // make a new subject item and then add all of it's rules to the document
             subjectObject = new Subject();
             foreach(SrgsRule rule in subjectObject.RuleList)
@@ -330,6 +330,7 @@ namespace Articulate
 
             document.Rules.Add(commands);
             document.Root = commands;
+            */
 
             // write grammar out for debugging purposes
             System.Xml.XmlWriter xWriter = System.Xml.XmlWriter.Create("grammar.xml");
@@ -341,6 +342,7 @@ namespace Articulate
         
         public static void Execute(SemanticValue semantics)
         {
+            /*
             // get the subject pieces
             List<string> subjects = parseSemanticList("subject", semantics);
 
@@ -376,6 +378,7 @@ namespace Articulate
                     DirectInputEmulator.SendKeyPresses(commandObjects[command].KeyLookup[directObject], 75);
                 }
             }
+            */
         }
 
         private static string parseSemantic(string key, SemanticValue semantic)

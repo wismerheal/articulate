@@ -9,76 +9,41 @@ using System.Diagnostics;
 
 namespace Articulate
 {
-    class Command : CommandChunk
+    class Command
     {
-        public SrgsItem Item { get; private set; }
+        public List<CommandChunk> CommandChunks { get; private set; }
 
-        public Command(string semantic, string[] alternates, ushort[] keyList)
+        public Command(CommandChunk trigger)
         {
-            GenerateRuleList(semantic, alternates);
-            GenerateKeyLookup(semantic, keyList);
+            CommandChunks = new List<CommandChunk>();
+            CommandChunks.Add(trigger);
         }
 
-        public Command(string semantic, string[] alternates, ushort[] keyList, SrgsRuleRef subjectRef)
+        public Command(string semantic, string[] alternates, ushort[] keys)
         {
-            GenerateRuleList(semantic, alternates, subjectRef);
-            GenerateKeyLookup(semantic, keyList);
+            // create command trigger
+            CommandChunk trigger = new CommandChunk(semantic);
+            trigger.Add(semantic, alternates, keys);
+
+            CommandChunks = new List<CommandChunk>();
+            CommandChunks.Add(trigger);
         }
 
-        public Command(string semantic, string[] alternates, ushort[] keyList, SrgsRuleRef subjectRef, DirectObject directObject)
+        public Dictionary<string, ushort[]> GetKeyList()
         {
-            GenerateRuleList(semantic, alternates, subjectRef, directObject);
-            GenerateKeyLookup(semantic, keyList, directObject);
-        }
+            Dictionary<string, ushort[]> keyList = new Dictionary<string, ushort[]>();
 
-        private void GenerateRuleList(string semantic, string[] alternates, SrgsRuleRef subjectRef = null, DirectObject directObject = null)
-        {
-            SrgsOneOf commandAlternates = new SrgsOneOf(alternates);
-            SrgsItem command = new SrgsItem();
-
-            if (subjectRef != null)
+            foreach (CommandChunk chunk in CommandChunks)
             {
-                command.Add(new SrgsItem(subjectRef));
-                command.Add(new SrgsSemanticInterpretationTag("out.subject=rules.subject;"));
-            }
+                Dictionary<string, ushort[]> chunkKeyList = chunk.GetKeyList();
 
-            command.Add(commandAlternates);
-            command.Add(new SrgsSemanticInterpretationTag("out.command=\"" + semantic + "\";"));
-
-            if (directObject != null)
-            {
-                command.Add(directObject.RuleRef);
-                command.Add(new SrgsSemanticInterpretationTag("out.directObject=rules." + directObject.RuleName + ";"));
-            }
-
-            Item = command;
-
-            RuleList = new List<SrgsRule>();
-            SrgsRule rule = new SrgsRule(semantic);
-            rule.Add(command);
-
-            RuleList.Add(rule);
-            RootRule = rule;
-        }
-
-        private void GenerateKeyLookup(string semantic, ushort[] keyList, DirectObject directObject = null)
-        {
-            List<ushort> keys = new List<ushort>();
-            foreach (ushort key in keyList)
-            {
-                keys.Add(key);
-            }
-
-            KeyLookup = new Dictionary<string, List<ushort>>();
-            KeyLookup.Add(semantic, keys);
-
-            if (directObject != null)
-            {
-                foreach(KeyValuePair<string, List<ushort>> entry in directObject.KeyLookup)
+                foreach(KeyValuePair<string, ushort[]> entry in chunkKeyList)
                 {
-                    KeyLookup.Add(entry.Key, entry.Value);
+                    keyList.Add(entry.Key, entry.Value);
                 }
             }
+            
+            return keyList;
         }
     }
 }

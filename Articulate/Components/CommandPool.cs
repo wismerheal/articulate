@@ -8,6 +8,8 @@ using System.Speech.Recognition;
 using System.Speech.Recognition.SrgsGrammar;
 using System.Diagnostics;
 using System.Globalization;
+using System.Xml.Serialization;
+using System.Xml;
 
 namespace Articulate
 {
@@ -20,6 +22,7 @@ namespace Articulate
             SrgsDocument document = new SrgsDocument();
             document.Culture = cultureInfo;
 
+            #region OLD COMMAND CODE
             /*
             // make a new subject item and then add all of it's rules to the document
             subjectObject = new Subject();
@@ -331,9 +334,46 @@ namespace Articulate
             document.Rules.Add(commands);
             document.Root = commands;
             */
+            #endregion
+
+            // squad numbers
+            CommandChunk squadNumbers = new CommandChunk("squadNumbers");
+            squadNumbers.Add("ONE", new string[] { "one" }, new ushort[] { Keys.F1 });
+            squadNumbers.Add("TWO", new string[] { "two" }, new ushort[] { Keys.F2 });
+            squadNumbers.Add("THREE", new string[] { "three" }, new ushort[] { Keys.F3 });
+            squadNumbers.Add("FOUR", new string[] { "four" }, new ushort[] { Keys.F4 });
+            squadNumbers.Add("FIVE", new string[] { "five" }, new ushort[] { Keys.F5 });
+            squadNumbers.Add("SIX", new string[] { "six" }, new ushort[] { Keys.F6 });
+            squadNumbers.Add("SEVEN", new string[] { "seven" }, new ushort[] { Keys.F7 });
+            squadNumbers.Add("EIGHT", new string[] { "eight" }, new ushort[] { Keys.F8 });
+            squadNumbers.Add("NINE", new string[] { "nine" }, new ushort[] { Keys.F9 });
+            squadNumbers.Add("TEN", new string[] { "ten" }, new ushort[] { Keys.F10 });
+            squadNumbers.Affixes = new string[] { "and" };
+            squadNumbers.MaxRepeat = 10;
+
+            // serialize it out
+            XmlSerializer serializer = new XmlSerializer(typeof(CommandChunk));
+            XmlWriter writer = XmlWriter.Create("commandChunkTest.xml");
+            serializer.Serialize(writer, squadNumbers);
+            writer.Close();
+
+            // deserialize it to another squadNumbers
+            XmlReader reader = XmlReader.Create("commandChunkTest.xml");
+            CommandChunk squadNumbersCopy = (CommandChunk) serializer.Deserialize(reader);
+
+            // serialize it out again
+            writer = XmlWriter.Create("commandChunkCOPYTest.xml");
+            serializer.Serialize(writer, squadNumbersCopy);
+            writer.Close();
+
+            SrgsRule squadNumbersRule = new SrgsRule("squadNumbers");
+            squadNumbersRule.Add(squadNumbersCopy.GetItem());
+
+            document.Rules.Add(squadNumbersRule);
+            document.Root = squadNumbersRule;
 
             // write grammar out for debugging purposes
-            System.Xml.XmlWriter xWriter = System.Xml.XmlWriter.Create("grammar.xml");
+            XmlWriter xWriter = XmlWriter.Create("grammar.xml");
             document.WriteSrgs(xWriter);
             xWriter.Close();
 

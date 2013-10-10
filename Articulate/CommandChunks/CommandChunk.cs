@@ -13,115 +13,50 @@ namespace Articulate
     /// <summary>
     /// Each entry into the command chunk is a semantic choice
     /// </summary>
-    public struct CommandChunkEntry
+    [Serializable]
+    public class CommandChunkEntry
     {
         public string Semantic;
         public string[] Alternates;
         public ushort[] KeyList;
+
+        public CommandChunkEntry()
+        {
+            Semantic = "";
+            Alternates = null;
+            KeyList = null;
+        }
     }
 
     [Serializable]
-    class CommandChunk
+    public class CommandChunk
     {
         #region Public Members
 
         /// <summary>
-        /// The SrgsItem that contains the command chunk information
-        /// </summary>
-        [XmlIgnore]
-        public SrgsItem Item
-        {
-            get
-            {
-                if (_item == null)
-                {
-                    Generate();
-                }
-                return _item;
-            }
-            private set
-            {
-                _item = value;
-            }
-        }
-
-        [XmlIgnore]
-        [NonSerialized]
-        private SrgsItem _item;
-
-        /// <summary>
         /// The name of this CommandChunk
         /// </summary>
-        public string Name { get; private set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Maximum number of semantic's appearing in this CommandChunk
         /// </summary>
-        public int MaxRepeat
-        {
-            get
-            {
-                return _maxRepeat;
-            }
-            set
-            {
-                _maxRepeat = value;
-                Generate();
-            }
-        }
-
-        [XmlIgnore]
-        [NonSerialized]
-        private int _maxRepeat;
+        public int MaxRepeat { get; set; }
 
         /// <summary>
         /// Optional prefixes
         /// </summary>
-        public string[] Prefixes
-        {
-            get
-            {
-                return _prefixes;
-            }
-            set
-            {
-                _prefixes = value;
-                Generate();
-            }
-        }
-
-        [XmlIgnore]
-        [NonSerialized]
-        private string[] _prefixes;
+        public string[] Prefixes { get; set; }
 
         /// <summary>
         /// Optional affixes
         /// </summary>
-        public string[] Affixes
-        {
-            get
-            {
-                return _affixes;
-            }
-            set
-            {
-                _affixes = value;
-                Generate();
-            }
-        }
-
-        [XmlIgnore]
-        [NonSerialized]
-        private string[] _affixes;
-
-        #endregion
-
-        #region Private Members
+        public string[] Affixes { get; set; }
 
         /// <summary>
         /// A list of all of the CommandChunkEntries that make up this particular CommandChunk
         /// </summary>
-        private List<CommandChunkEntry> Entries { get; set; }
+        public List<CommandChunkEntry> Entries { get; private set; }
 
         #endregion
 
@@ -130,7 +65,15 @@ namespace Articulate
         /// <summary>
         /// Default Constructor
         /// </summary>
-        /// <param name="name">The name of this CommandChunk</param>
+        public CommandChunk()
+        {
+            Entries = new List<CommandChunkEntry>();
+
+            MaxRepeat = 1;
+            Prefixes = null;
+            Affixes = null;
+        }
+
         public CommandChunk(string name)
         {
             Entries = new List<CommandChunkEntry>();
@@ -147,13 +90,11 @@ namespace Articulate
         public void Add(string semantic, string[] alternates, ushort[] keys)
         {
             // fill in the new entry and add it in
-            CommandChunkEntry newEntry;
+            CommandChunkEntry newEntry = new CommandChunkEntry();
             newEntry.Semantic = semantic;
             newEntry.Alternates = alternates;
             newEntry.KeyList = keys;
             Entries.Add(newEntry);
-
-            Generate();
         }
 
         public Dictionary<string, ushort[]> GetKeyList()
@@ -171,12 +112,12 @@ namespace Articulate
 
         #endregion
 
-        #region Private Methods
+        #region Public Methods
 
-        private void Generate()
+        public SrgsItem GetItem()
         {
             // set the with the repeat parameters
-            Item = new SrgsItem(1, MaxRepeat);
+            SrgsItem item = new SrgsItem(1, MaxRepeat);
 
             if (Entries.Count > 0)
             {
@@ -193,21 +134,27 @@ namespace Articulate
                 {
                     SrgsOneOf prefixesChoice = new SrgsOneOf(Prefixes);
                     SrgsItem prefixes = new SrgsItem(0, 1, prefixesChoice);
-                    Item.Add(prefixes);
+                    item.Add(prefixes);
                 }
 
                 // add the required choice
-                Item.Add(choice);
+                item.Add(choice);
 
                 // add the optional affixes
                 if (Affixes != null)
                 {
                     SrgsOneOf affixesChoice = new SrgsOneOf(Affixes);
                     SrgsItem affixes = new SrgsItem(0, 1, affixesChoice);
-                    Item.Add(affixes);
+                    item.Add(affixes);
                 }
             }
+
+            return item;
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Gets a new SrgsItem with the spoken word alternates and a semantic assoicated
